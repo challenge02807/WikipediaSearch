@@ -22,7 +22,7 @@ def find_nested_matches(orig_pattern, data, app):
     return app
 
 # Define function that is run as a process by itself
-def searcher(id,cores,path,round_size,orig_pattern):
+def searcher(id,cores,path,rounded_size,orig_pattern,file_size):
 
     # Translate the pattern to a regular expression for python
     sub_dict = {"[":".{" , "]": "}"}
@@ -63,7 +63,7 @@ def searcher(id,cores,path,round_size,orig_pattern):
         matches = regex.findall(short_pattern, line,concurrent=True)
 
         if len(matches) > 0: # Found at least one match
-            match = find_all_matches(r''+short_pattern+'',line) # Find all nested matches
+            match = find_all_matches(short_pattern,line) # Find all nested matches
             if match != None:
                 match = set(list(chain.from_iterable(match)))  # Flatten list of matches and uniq them
                 for m in match:
@@ -75,25 +75,28 @@ def searcher(id,cores,path,round_size,orig_pattern):
 
     return out # Terminate
 
+#List pattern argument translated to bracket string form
 def list_arg_to_str(pat_list):
     pattern_mod = ""
     for elem in pat_list:
         pattern_mod += str.replace(str.replace(str.replace(str(elem), '(', '['), ')', ']'), ' ', '')
     return pattern_mod
 
-def format_results(res):
+#count matches and print them formatted
+def print_results(res):
     match_counter = 0
-    out_str = ""
+    for tmp_list in res:
+        for _ in tmp_list:
+            match_counter += 1
+    print(match_counter)
     for tmp_list in res:
         for match in tmp_list:
-            match_counter += 1
-            out_str += match[0] + "\t" + match[1] + "\n"
-    return (str(match_counter) + "\n" + out_str)
+            print("%10s \t %s" % (match[0],match[1]))
 
 if __name__ == '__main__':
 
     start_time = time.time() #Start timing
-    pattern = list_arg_to_str(['apache', (0, 100), 'software']) # Translate pattern
+    pattern = list_arg_to_str(['dogs', (0, 15), 'are',(0,15),'to']) # Translate pattern
 
     # Count the number of CPUs (incl. virtual CPUs due to hyperthreading)
     # Multiply by a scale (3 seems to be a alright)
@@ -112,11 +115,12 @@ if __name__ == '__main__':
         inner.append(file_path) # Path to parsed data file
         inner.append(rounded_size)
         inner.append(pattern) # The altered pattern
+        inner.append(file_size)
         args.append(inner)
 
     # Create a pool of processes, map all args to each process and run!
     with Pool(processes=cores) as pool:
         results = pool.starmap(searcher, args)
-        print(format_results(results))
+        print_results(results)
         print()
         print("(Query took %i seconds in real time)" % (time.time() - start_time))
