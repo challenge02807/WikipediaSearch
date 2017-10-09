@@ -2,48 +2,6 @@ import os,re,time,regex
 from itertools import chain
 from multiprocessing import Pool
 from multiprocessing import cpu_count
-from ast import literal_eval
-
-def get_matches_starting_at(data, pattern, index, starting_index, resulting_matches):
-    sub_data = data[index:]
-    P = pattern[0]
-    if sub_data[:len(P)] == P:
-        if len(pattern) == 1:
-            resulting_matches.append((starting_index, index + len(P)))
-        else:
-            for new_index in range(pattern[1][0] + 1, pattern[1][1] + 2):
-                get_matches_starting_at(data, pattern[2:], index + len(P) + new_index - 1, starting_index,
-                                        resulting_matches)
-        return resulting_matches
-    else:
-        return []
-
-def get_all_matches(data, pattern):
-    matches_found = []
-    for index in range(len(data)):
-        matches_at_index = get_matches_starting_at(data, pattern, index, index, [])
-        matches_found += matches_at_index
-    return set(matches_found)
-
-def parse_to_func(orig_pattern):
-    str_out = []
-    for char in orig_pattern:
-        if char == "[":
-            str_out.append(" ")
-            str_out.append("(")
-        elif char == "]":
-            str_out.append(")")
-            str_out.append(" ")
-        else:
-            str_out.append(char)
-
-    out = []
-    for elem in ''.join(str_out).split():
-        if re.match(r'\(\d+,\d+\)',elem):
-            out.append(literal_eval(elem))
-        else:
-            out.append(elem)
-    return out
 
 # Inital function for retrieving matches. Calls recursive function below.
 def find_all_matches(orig_pattern, data):
@@ -53,7 +11,6 @@ def find_all_matches(orig_pattern, data):
         for m in matches:
             out.append(find_nested_matches(orig_pattern, m, []))  # Call recursive function to get nested substrings
         return out
-
 
 # Recursive function to retrieve nested matches
 def find_nested_matches(orig_pattern, data, app):
