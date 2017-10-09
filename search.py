@@ -83,24 +83,27 @@ def list_arg_to_str(pat_list):
     return pattern_mod
 
 #count matches and print them formatted
-def print_results(res):
+def print_results(res,file):
     match_counter = 0
     for tmp_list in res:
         for _ in tmp_list:
             match_counter += 1
-    print(match_counter)
+    print(match_counter,file=file)
     for tmp_list in res:
         for match in tmp_list:
-            print("%10s \t %s" % (match[0],match[1]))
+            print("%10s \t %s" % (match[0],match[1]),file=file)
 
 if __name__ == '__main__':
 
     start_time = time.time() #Start timing
-    pattern = list_arg_to_str(['dogs', (0, 15), 'are',(0,15),'to']) # Translate pattern
+
+    pattern = list_arg_to_str(['arnold', (0, 10), 'schwarzenegger', (0, 10), 'is'])
+
+    validation_file = open("grading/a_articles/" + pattern,'w+')
 
     # Count the number of CPUs (incl. virtual CPUs due to hyperthreading)
-    # Multiply by a scale (3 seems to be a alright)
-    cores = cpu_count() * 3
+    # Multiply by a scale (4 seems to be a alright)
+    cores = cpu_count() * 4
     file_path = "data/parsed_data_a"
     file_size = os.path.getsize(file_path)
     rounded_size = int(file_size/cores) # Approximate bytes that each process should handle
@@ -113,14 +116,14 @@ if __name__ == '__main__':
         inner.append(i) # Process id
         inner.append(cores) # Number of processes
         inner.append(file_path) # Path to parsed data file
-        inner.append(rounded_size)
+        inner.append(rounded_size) #approximate size of process space
         inner.append(pattern) # The altered pattern
-        inner.append(file_size)
+        inner.append(file_size) #end byte
         args.append(inner)
 
     # Create a pool of processes, map all args to each process and run!
     with Pool(processes=cores) as pool:
         results = pool.starmap(searcher, args)
-        print_results(results)
+        print_results(results,validation_file)
         print()
-        print("(Query took %i seconds in real time)" % (time.time() - start_time))
+        print("(Query took %i seconds in real time)" % (time.time() - start_time),file=validation_file)
