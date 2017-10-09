@@ -23,12 +23,6 @@ def find_nested_matches(orig_pattern, data, app):
 
 # Define function that is run as a process by itself
 def searcher(id,cores,path,rounded_size,orig_pattern,file_size):
-
-    # Translate the pattern to a regular expression for python
-    sub_dict = {"[":".{" , "]": "}"}
-    pattern = re.compile("(%s)" % "|".join(map(re.escape, sub_dict.keys())))
-    short_pattern = pattern.sub(lambda str: sub_dict[str.string[str.start():str.end()]], orig_pattern).lower()
-
     # Each process opens own filehandle. Read bytes.
     filehandle = open(path, 'rb')
 
@@ -75,12 +69,18 @@ def searcher(id,cores,path,rounded_size,orig_pattern,file_size):
 
     return out # Terminate
 
-#List pattern argument translated to bracket string form
+# list transformed to python regular expression
 def list_arg_to_str(pat_list):
-    pattern_mod = ""
+    # creating string from list elements
+    pattern_mod = ""    
     for elem in pat_list:
-        pattern_mod += str.replace(str.replace(str.replace(str(elem), '(', '['), ')', ']'), ' ', '')
-    return pattern_mod
+        pattern_mod += str(elem)
+    
+    # Translate the pattern to a regular expression for python
+    sub_dict = {"(":".{" , ")": "}", " ": ""}
+    pattern = re.compile("(%s)" % "|".join(map(re.escape, sub_dict.keys())))
+    short_pattern = pattern.sub(lambda str: sub_dict[str.string[str.start():str.end()]], pattern_mod).lower()
+    return short_pattern
 
 #count matches and print them formatted
 def print_results(res,file):
